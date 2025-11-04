@@ -11,7 +11,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -19,6 +20,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -27,6 +29,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+      start_period: 30s
 
   postgres:
     image: postgres:15
@@ -45,9 +48,11 @@ services:
       dockerfile: services/delivery-service/src/DeliveryService/Dockerfile
     container_name: delivery-service
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - Kafka__BootstrapServers=kafka:9092
     ports:
       - "8081:80"
@@ -58,9 +63,13 @@ services:
       dockerfile: services/order-service/src/OrderService/Dockerfile
     container_name: order-service
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - Kafka__BootstrapServers=kafka:9092
     ports:
       - "8080:80"

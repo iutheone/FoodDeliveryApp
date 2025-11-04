@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // config
-var kafkaBootStrapServer = builder.Configuration.GetValue<string>("Kafka:BootstrapServers")?? "localhost:29092";
+var kafkaBootStrapServer = builder.Configuration.GetValue<string>("Kafka:BootstrapServers")?? "kafka:9092";
 var kafkaTopic = builder.Configuration.GetValue<string>("Kafka:Topic") ?? "order.placed";
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Host=localhost;Database=ordersdb;Username=postgres;Password=postgres";
+    ?? "Host=postgres;Database=ordersdb;Username=postgres;Password=postgres";
 
 
 //Add EF Core
