@@ -11,7 +11,7 @@ namespace DeliveryService.Kafka{
 
     public KafkaConsumer(IConfiguration config, ILogger<KafkaConsumer> logger)
     {
-      _bootstrapServers = config.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
+      _bootstrapServers = config.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:29092";
       _logger = logger;
     }
 
