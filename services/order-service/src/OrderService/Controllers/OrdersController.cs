@@ -20,6 +20,12 @@ namespace OrderService.Controllers
       _kafkaProducer = kafkaProducer;
     }
 
+    [HttpGet]
+    public IActionResult Get(){
+      return Ok("working fine..");
+    }
+
+    [HttpPost("PlaceOrder")]
     public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderRequest req){
       var order = new Order{
         OrderId = Guid.NewGuid(),
@@ -34,6 +40,6 @@ namespace OrderService.Controllers
       return Ok(new { orderId = order.OrderId });
     }
 
-    public record PlaceOrderRequest(Guid UserId, decimal Amount);
+    public record PlaceOrderRequest(int UserId, decimal Amount);
   }
 }

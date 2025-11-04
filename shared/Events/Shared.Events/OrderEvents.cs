@@ -1,7 +1,7 @@
 ﻿namespace Shared.Events{
   public record OrderPlacedEvent(
     Guid OrderId,
-    Guid UserId,
+    int UserId,
     decimal Amount,
     DateTime PlacedAt
   );
