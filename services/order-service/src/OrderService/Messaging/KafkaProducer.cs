@@ -12,12 +12,12 @@ namespace OrderService.Messaging{
       _producer = new ProducerBuilder<Null, string>(conf).Build();
     }
 
-    public async Task ProduceAsync<T>(T message)
-    {
-        var json = JsonSerializer.Serialize(message);
-        var result = await _producer.ProduceAsync(_topic, new Message<Null, string> { Value = json });
-        Console.WriteLine($"✅ Sent message to Kafka: {json}");
-    }
+      public async Task ProduceAsync<T>(T message)
+      {
+          var json = JsonSerializer.Serialize(message);
+          var result = await _producer.ProduceAsync(_topic, new Message<Null, string> { Value = json });
+          Console.WriteLine($"✅ Sent message to Kafka: {json}");
+      }
 
     public void Dispose() => _producer?.Flush(TimeSpan.FromSeconds(5));
   }

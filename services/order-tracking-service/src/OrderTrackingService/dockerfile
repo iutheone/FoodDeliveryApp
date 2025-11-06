@@ -1,0 +1,27 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy all csproj files first (including shared)
+COPY shared/Events/Shared.Events/Shared.Events.csproj shared/Events/
+COPY services/order-tracking-service/src/OrderTrackingService/OrderTrackingService.csproj services/order-tracking-service/src/OrderTrackingService
+
+# Restore
+RUN dotnet restore "services/order-tracking-service/src/OrderTrackingService/OrderTrackingService.csproj"
+
+# Copy everything
+COPY . .
+
+WORKDIR /src/services/order-tracking-service/src/OrderTrackingService
+RUN dotnet build "OrderTrackingService.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "OrderTrackingService.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "OrderTrackingService.dll"]

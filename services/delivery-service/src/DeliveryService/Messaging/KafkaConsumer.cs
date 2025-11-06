@@ -96,7 +96,6 @@ namespace DeliveryService.Kafka{
           catch (ConsumeException ex)
           {
             _logger.LogError(ex, $"Error consuming message: {ex.Error.Reason}");
-            // Continue consuming on error
           }
         }
       }
@@ -117,9 +116,27 @@ namespace DeliveryService.Kafka{
         await Task.Delay(20000); // simulate delay
 
         _logger.LogInformation($"✅ Delivery Partner Assigned for Order {order.OrderId}");
+
+         await Task.Delay(20000); // simulate delay
+
+
+    }
+
+    private async SendDeliveryStatus(OrderCreatedEvent order){
+       
+        var deliveryStatusProducer = new DeliveryStatusProducer(_bootstrapServers);
+        deliveryStatusProducer.ProduceAsync()
+        
+        await Task.Delay(20000); // simulate delay
+
+
+       
     }
     
   }
+
+  public record DeliveryStatus(string OrderID, string status);
+
 
 
   public class OrderCreatedEvent
