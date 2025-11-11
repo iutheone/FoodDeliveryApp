@@ -17,7 +17,7 @@ export default function CartDrawer() {
           <div key={c.item.id} className="cart-row">
             <div>
               <div style={{ fontWeight: 700 }}>{c.item.name}</div>
-              <div className="small">${c.item.price.toFixed(2)} • {c.qty} qty</div>
+              <div className="small">Rs.{c.item.price.toFixed(2)} • {c.qty} qty</div>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => dispatch({ type: 'DECREMENT', itemId: c.item.id, restaurantId: c.restaurantId })}>-</button>
@@ -29,7 +29,7 @@ export default function CartDrawer() {
       </div>
       <div style={{ marginTop: 12 }}>
         <div className="small">Subtotal</div>
-        <div style={{ fontWeight: 800, fontSize: 18 }}>${subtotal.toFixed(2)}</div>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>Rs.{subtotal.toFixed(2)}</div>
         <Link to="/checkout"><button className="checkout-btn">Proceed to checkout</button></Link>
       </div>
     </div>

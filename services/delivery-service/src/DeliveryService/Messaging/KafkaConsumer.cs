@@ -125,8 +125,7 @@ namespace DeliveryService.Kafka{
     private async SendDeliveryStatus(OrderCreatedEvent order){
        
         var deliveryStatusProducer = new DeliveryStatusProducer(_bootstrapServers);
-        deliveryStatusProducer.ProduceAsync()
-        
+        deliveryStatusProducer.ProduceAsync();
         await Task.Delay(20000); // simulate delay
 
 

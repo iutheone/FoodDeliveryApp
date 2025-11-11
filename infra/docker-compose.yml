@@ -42,20 +42,20 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  delivery-service:
-    build:
-      context: ..
-      dockerfile: services/delivery-service/src/DeliveryService/Dockerfile
-    container_name: delivery-service
-    depends_on:
-      kafka:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - Kafka__BootstrapServers=kafka:9092
-    ports:
-      - "8081:80"
+  # delivery-service:
+  #   build:
+  #     context: ..
+  #     dockerfile: services/delivery-service/src/DeliveryService/Dockerfile
+  #   container_name: delivery-service
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_URLS=http://+:80
+  #     - Kafka__BootstrapServers=kafka:9092
+  #   ports:
+  #     - "8081:80"
 
   order-service:
     build:

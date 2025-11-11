@@ -1,4 +1,4 @@
-export type MenuItem = {
+export type iMenuItem = {
   id: string,
   name: string,
   description?: string,
@@ -15,6 +15,7 @@ export type Restaurant ={
   rating: number,
   image?: string,
   eta : string,
+  location: string,
   menu : MenuItem[]
 }
 

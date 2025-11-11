@@ -8,7 +8,6 @@ export default function Checkout() {
   const subtotal = cart.items.reduce((s, i) => s + i.qty * i.item.price, 0)
 
   function placeOrder() {
-    // Demo: clear cart and go to a simple confirmation
     dispatch({ type: 'CLEAR' })
     alert('Order placed! 🎉')
     navigate('/')
@@ -25,15 +24,15 @@ export default function Checkout() {
             <div key={i.item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <div>
                 <div style={{ fontWeight: 700 }}>{i.item.name} × {i.qty}</div>
-                <div className="small">${(i.item.price * i.qty).toFixed(2)}</div>
+                <div className="small">Rs.{(i.item.price * i.qty).toFixed(2)}</div>
               </div>
-              <div>${(i.item.price * i.qty).toFixed(2)}</div>
+              <div>Rs.{(i.item.price * i.qty).toFixed(2)}</div>
             </div>
           ))}
         </div>
         <div style={{ marginTop: 12 }}>
           <div className="small">Subtotal</div>
-          <div style={{ fontWeight: 800 }}>${subtotal.toFixed(2)}</div>
+          <div style={{ fontWeight: 800 }}>Rs.{subtotal.toFixed(2)}</div>
         </div>
         <div style={{ marginTop: 12 }}>
           <button className="checkout-btn" onClick={placeOrder}>Place Order</button>

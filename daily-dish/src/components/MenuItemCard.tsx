@@ -13,7 +13,7 @@ export default function MenuItemCard({ item, restaurantId }: { item: MenuItem; r
         </div>
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontWeight: 700 }}>${item.price.toFixed(2)}</div>
+        <div style={{ fontWeight: 700 }}>Rs.{item.price.toFixed(2)}</div>
         <button className="btn" onClick={() => dispatch({ type: 'ADD', item, restaurantId })}>Add</button>
       </div>
     </div>
