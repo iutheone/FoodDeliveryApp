@@ -2,7 +2,6 @@
 
 using OrderService.Data;
 using OrderService.Messaging;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,11 +11,8 @@ var kafkaTopic = builder.Configuration.GetValue<string>("Kafka:Topic") ?? "order
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=postgres;Database=ordersdb;Username=postgres;Password=postgres";
 
-
-//Add EF Core
-builder.Services.AddDbContext<OrdersDbContext>(options =>
-    options.UseNpgsql(connStr)
-);
+//Add ADO.NET Repository
+builder.Services.AddScoped<IOrderRepository>(sp => new OrderRepository(connStr));
 
 //Add Kafka Producer
 builder.Services.AddSingleton<KafkaProducer>(new KafkaProducer(kafkaBootStrapServer, kafkaTopic));
@@ -29,11 +25,12 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
-// EF migrations / ensure db created
+
+// Initialize database
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
-    db.Database.EnsureCreated();
+    var repository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+    await repository.InitializeDatabaseAsync();
 }
 
-app.Run();
+await app.RunAsync();
