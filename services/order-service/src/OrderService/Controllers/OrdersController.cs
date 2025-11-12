@@ -1,7 +1,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Data;
-using OrderService.Models;
+using SharedEvents.Models;
 using OrderService.Messaging;
 using Shared.Events;
 
@@ -30,7 +30,6 @@ namespace OrderService.Controllers
     {
       try
       {
-        // Create restaurant object
         var restaurant = new Restaurant
         {
           Name = request.Name,
@@ -42,7 +41,6 @@ namespace OrderService.Controllers
           CreatedAt = DateTime.UtcNow
         };
 
-        // Prepare menu items
         var menuItems = new List<MenuItem>();
         if (request.MenuItems != null && request.MenuItems.Any())
         {
@@ -60,8 +58,6 @@ namespace OrderService.Controllers
             menuItems.Add(menuItem);
           }
         }
-
-        // Add restaurant with menu items (transaction handled in repository)
         var restaurantId = await _repository.AddRestaurantWithMenuItemsAsync(restaurant, menuItems);
 
         return Ok(new { message = "Restaurant and menu items added successfully", restaurantId = restaurantId });
@@ -72,18 +68,45 @@ namespace OrderService.Controllers
       }
     }
 
-    // [HttpPost("PlaceOrder")]
-    // public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderRequest req){
-    //   var order = new Order{
-    //     OrderId = Guid.NewGuid(),
-    //     Status = "Placed",
-    //     CreatedAt = DateTime.UtcNow
-    //   };
-    //   _context.Orders.Add(order);
-    //   //await _context.SaveChangesAsync();
-    //   await _kafkaProducer.ProduceAsync(new OrderPlacedEvent(order.OrderId, order.Amount, order.CreatedAt));
-    //   return Ok(new { orderId = order.OrderId });
-    // }
+    [HttpGet("GetAllRestuarants")]
+    public async Task<IActionResult> GetAllRestuarants(){
+      try
+      {
+        var restaurants =  _repository.GetAllRestaurents();
+        return Ok(new {Restaurants = restaurants, Message = "Success"});
+      }
+      catch (System.Exception ex)
+      { 
+        return StatusCode(500, new { message = "Error in Getting All Restaurant list", error = ex.Message });
+      }
+    }
+
+    [HttpGet("GetRestaurantMenuList")]
+    public async Task<IActionResult> GetRestaurantMenuList([FromQuery] int restId){
+      try
+      {
+        var menuList =  _repository.GetMenuItems(restId);
+        return Ok(new {MenuList = menuList, Message = "Success"});
+      }
+      catch (System.Exception ex)
+      { 
+        return StatusCode(500, new { message = "Error in Getting Restaurant Menu List ", error = ex.Message });
+      }
+    }
+
+    [HttpPost("PlaceOrder")]
+    public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderRequest req){
+      try
+      { 
+        var orderId = _repository.PlaceOrderRequest(new Order{RestaurantId = req.RestaurantId, Amount = req.Amount}, req.MenuItems);
+        await _kafkaProducer.ProduceAsync(new OrderPlacedEvent(orderId, req.Amount, DateTime.UtcNow));
+        return Ok(new { orderId = orderId, message= "Order placed successfully" });
+      }
+      catch(Exception ex){
+        return StatusCode(500, new { message = "Error in Getting Restaurant Menu List ", error = ex.Message });
+      }
+      //
+    }
 
     public record AddRestaurantRequest(
       string Name,
@@ -93,6 +116,12 @@ namespace OrderService.Controllers
       int Eta,
       string Location,
       List<MenuItem>? MenuItems
+    );
+
+    public record PlaceOrderRequest(
+      int RestaurantId,
+      int Amount,
+      List<int> MenuItems
     );
   }
 }

@@ -1,13 +1,13 @@
-// Models/Order.cs
 using System;
 
-namespace OrderService.Models
+namespace SharedEvents.Models
 {
     public class Order
     {
-        public Guid OrderId { get; set; } = Guid.NewGuid();
+        public int OrderId {get;set;}
         public string Status { get; set; } = "Pending";
         public int RestaurantId{get;set;}
+        public int Amount{get;set;}
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 

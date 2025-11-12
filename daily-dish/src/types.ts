@@ -1,4 +1,4 @@
-export type iMenuItem = {
+export type MenuItem = {
   id: string,
   name: string,
   description?: string,

@@ -1,6 +1,6 @@
 using System.Data;
 using Npgsql;
-using OrderService.Models;
+using SharedEvents.Models;
 
 namespace OrderService.Data
 {
@@ -55,8 +55,9 @@ namespace OrderService.Data
             // Create Orders table
             var createOrdersTable = @"
                 CREATE TABLE IF NOT EXISTS Orders (
-                    OrderId UUID PRIMARY KEY,
+                    OrderId SERIAL PRIMARY KEY,
                     Status VARCHAR(50) NOT NULL,
+                    Amount integer not null,
                     RestaurantId INTEGER NOT NULL REFERENCES Restaurants(Id),
                     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );";
@@ -65,7 +66,7 @@ namespace OrderService.Data
             var createOrderMenuMappingsTable = @"
                 CREATE TABLE IF NOT EXISTS OrderMenuMappings (
                     Id SERIAL PRIMARY KEY,
-                    OrderId UUID NOT NULL REFERENCES Orders(OrderId) ON DELETE CASCADE,
+                    OrderId INTEGER NOT NULL REFERENCES Orders(OrderId) ON DELETE CASCADE,
                     MenuId INTEGER NOT NULL REFERENCES MenuItems(Id) ON DELETE CASCADE
                 );";
 
@@ -215,6 +216,106 @@ namespace OrderService.Data
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+
+
+        public async Task<List<Restaurant>> GetAllRestaurents()
+        {
+            var restaurants = new List<Restaurant>();
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var sql = @"
+                SELECT Id, Name, Cuisine, Rating, Image, Eta, Location, CreatedAt
+                FROM Restaurants
+                ORDER BY CreatedAt DESC;";
+
+            using var command = new NpgsqlCommand(sql, connection);
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                restaurants.Add(new Restaurant
+                {
+                    Id = reader.GetInt32("Id"),
+                    Name = reader.GetString("Name"),
+                    Cuisine = reader.GetString("Cuisine"),
+                    Rating = reader.GetDecimal("Rating"),
+                    Image = reader.IsDBNull("Image") ? string.Empty : reader.GetString("Image"),
+                    Eta = reader.GetInt32("Eta"),
+                    Location = reader.GetString("Location"),
+                    CreatedAt = reader.GetDateTime("CreatedAt")
+                });
+            }
+
+            return restaurants;
+        }
+
+        public async Task<List<MenuItem>> GetMenuItems(int restaurantID){
+            List<MenuItem> menuItems = new ();
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var sql = @"select A.Id, A.Name, A.Description, A.Price, A.Image, A.Veg, A.CreatedAt from menuitems A 
+                        inner join restaurantmenumappings B on A.ID = B.MenuID
+                        where B.RestaurantID = @RestaurantID;"; 
+
+            using var command = new NpgsqlCommand(sql,connection);
+            command.Parameters.AddWithValue("@RestaurantID" , restaurantID);
+            using var reader = await command.ExecuteReaderAsync();
+
+            while(await reader.ReadAsync()){
+                menuItems.Add(new MenuItem{
+                    Id = reader.GetInt32("Id"),
+                    Name = reader.GetString("Name"),
+                    Description = reader.GetString("Description"),
+                    Price = reader.GetInt32("Price"),
+                    Image = reader.IsDBNull("Image") ? string.Empty : reader.GetString("Image"),
+                    Veg = reader.GetBoolean("Veg"),
+                    CreatedAt = reader.GetDateTime("CreatedAt")
+                });
+            }
+
+            return menuItems;
+        }
+
+
+        public async Task<int> PlaceOrderRequest(Order order, List<int> mapping){
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var transaction = await connection.BeginTransactionAsync();
+            try{
+                var sql = @"INSERT INTO Orders(Status, RestaurantId, Amount,CreatedAt)
+                Values(@Status, @RestaurantId, @Amount,  @CreatedAt)
+                RETURNING OrderId;";
+
+                using var orderCommand = new NpgsqlCommand(sql, connection, transaction);
+                orderCommand.Parameters.AddWithValue("@Status", "Pending");
+                orderCommand.Parameters.AddWithValue("@RestaurantId", order.RestaurantId);
+                orderCommand.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
+                orderCommand.Parameters.AddWithValue("@Amount", order.Amount);
+                var orderId = (int)await orderCommand.ExecuteScalarAsync();
+
+                var mappingSql = @"
+                INSERT INTO ordermenumappings (OrderId, MenuId)
+                VALUES (@OrderId, @MenuId);";
+
+                foreach(var item in mapping){
+                    using var command = new NpgsqlCommand(mappingSql, connection, transaction);
+                    command.Parameters.AddWithValue("@OrderId", orderId);
+                    command.Parameters.AddWithValue("@MenuId", item);
+                    await command.ExecuteNonQueryAsync();
+                }
+                await transaction.CommitAsync();
+                return orderId;
+                
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+
         }
     }
 }
